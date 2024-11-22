@@ -553,9 +553,12 @@ def serialize_item_stack(item_tag):
     }
 
     # add item amount
-    if item_tag['Count'].value != 1:
-        item_data['amount'] = item_tag['Count'].value
-
+    try:
+      if item_tag['Count'].value != 1:
+          item_data['amount'] = item_tag['Count'].value
+    except:
+     if item_tag['count'].value != 1:
+         item_data['amount'] = item_tag['count'].value
     # add item meta
     if 'tag' in item_tag:
         item_data['meta'] = get_item_meta(item_data['type'], item_tag['tag'])
@@ -653,7 +656,11 @@ def main(player_filename, mv_world='world'):
     json_data = serialize_player_nbt(player, mv_world)
 
     # Get player name
-    name = player['bukkit']['lastKnownName'].value
+    try:
+        name = player['bukkit']['lastKnownName'].value
+    except:
+        print("Error: Could not find player name in NBT file")
+        name = player_filename.split('.')[0]
 
     with open(name + '.json', 'w') as out_file:
         json.dump(json_data, out_file)
@@ -667,5 +674,21 @@ def test():
 
 if __name__ == '__main__':
     # test()
-    world = sys.argv[2] if len(sys.argv) > 2 else 'world'
-    main(sys.argv[1], world)
+
+    filename = sys.argv[1]
+    worldname = sys.argv[2] if len(sys.argv) > 2 else 'world'
+
+    if filename == "all":
+        print("Converting all player files in current directory")
+        import os
+        for file in os.listdir("./"):
+            if file.endswith(".dat"):
+                try:
+                    main(file, worldname)
+                except Exception as e:
+                    print("Something happened in file: " + file)
+            else:
+                print("\n") # i couldn't figure out why but it needs some code in the else statement to work.  I tried break but that didn't and this works so idk
+    else:
+        print("Converting player file: " + filename)
+        main(filename, worldname)
